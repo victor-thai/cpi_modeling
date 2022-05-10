@@ -1,11 +1,14 @@
 from PIL import Image
 import streamlit as st
 
+banner = Image.open("ds3_banner.PNG")
+st.image(banner, width = 700)
+
 st.title("About Us")
 
 st.write("We are a group of students from UCSD's Data Science Student Society. As members of the CPI project team, we show passion, initiative, and competence to contribute to this 2-quarter long project. Our team has a diverse background but we are brought together by a common love for data science.")
 
-st.header("Project Members")
+st.title("Project Members")
 
 v_col1, v_col2 = st.columns(2)
 with v_col1:
