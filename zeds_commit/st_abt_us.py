@@ -1,10 +1,10 @@
 from PIL import Image
 import streamlit as st
 
+st.title("About Us")
+
 banner = Image.open("ds3_banner.PNG")
 st.image(banner, width = 700)
-
-st.title("About Us")
 
 st.write("We are a group of students from UCSD's Data Science Student Society. As members of the CPI project team, we show passion, initiative, and competence to contribute to this 2-quarter long project. Our team has a diverse background but we are brought together by a common love for data science.")
 
@@ -22,7 +22,7 @@ with v_col2:
 m_col1, m_col2 = st.columns(2)
 with m_col1:
     st.subheader("Michael Chen")    
-    st.write("Michael is a second-year student at UC San Diego, majoring in Data Science and Minor in Management Science. Michael is also involved in the Finance Committee in UTS at UCSD.")
+    st.write("Michael is a second-year student at UC San Diego, majoring in Data Science and Minor in Management Science. Michael was in the Chinese Union. A fun fact about him is that he gets excited when facing a hard task to be solved.")
 with m_col2:
     st.subheader("")
     m_img = Image.open("michael_headshot.jpeg")
