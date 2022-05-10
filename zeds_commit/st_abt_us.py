@@ -23,7 +23,7 @@ with m_col1:
 s_col1, s_col2 = st.columns(2)
 with s_col1:
     st.subheader("Stephanie Chavez")
-    st.write("Stephanie is a second-year student at UC San Diego, majoring in Data Science.")
+    st.write("Stephanie is a second-year student at UC San Diego, majoring in Data Science. Stephanie is a sister of Sigma Pi Alpha Sorority, Inc. and is a First-Gen Student Success Peer Coach. Some of her interests outside of data science include musical theatre, fantasy books, and dogs.")
 
 
 z_col1, z_col2 = st.columns(2)
