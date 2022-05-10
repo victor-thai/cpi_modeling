@@ -1,5 +1,6 @@
 import base64
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import streamlit as st
 import time
@@ -78,6 +79,7 @@ st.image(image4, caption='Diagnose', use_column_width=True)
 st.write('The data is normal distributed around 0 with a standard deviation of 1 illustrated by the four graphs. '
          'It proves that the model is able to fit the data well. Therefore, we fed 80% of the data to the model and use the'
          ' remaining 20% to test the model.')
+
 
 def plot_prediction(df):
     st.header('Validation')
