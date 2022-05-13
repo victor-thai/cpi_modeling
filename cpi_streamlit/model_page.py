@@ -17,6 +17,9 @@ cpi.index = pd.to_datetime(cpi.index, infer_datetime_format = True)
 # there are null column values that we cannot fix
 cpi = cpi.dropna(axis = 1)
 
+train = cpi.iloc[:96]
+test = cpi.iloc[96::]
+
 st.markdown('# VARIMA Model')
 st.markdown("""
 	Since CPI data can be interpretted as a type of time series data, we decided to proceed with a VARIMA model
@@ -63,8 +66,35 @@ st.markdown("""
 	 plotted an Autocorrelation Function plot. This gives insight into the parameters that we should use for our
 	 VARIMA model.""")
 
+st.markdown("""
+	Let's predict next month's cpi!
+	""")
 
+model = VARMAX(train[['All items', 'Crude Oil Price', 'Gold US dollar per oz']], order=(4,0)).fit( disp=False)
+result = model.forecast(steps = 24)
+
+predict_button = st.button('Predict')
+if predict_button:
+	st.write(result[0:1])
+
+	for i in ['All items', 'Crude Oil Price', 'Gold US dollar per oz']:
+	    
+	    plt.rcParams["figure.figsize"] = [10,7]
+	    plt.plot( train[str(i)], label='Train '+str(i))
+	    plt.plot(test[str(i)], label='Test '+str(i))
+	    plt.plot(result[str(i)], label='Predicted '+str(i))
+	    plt.legend(loc='best')
+	    plt.show()
 
 st.markdown("""
 	As we plot our model, these are the results that we yield.
 	""")
+
+# for i in ['All items', 'Crude Oil Price', 'Gold US dollar per oz']:
+	    
+#     plt.rcParams["figure.figsize"] = [10,7]
+#     plt.plot( train[str(i)], label='Train '+str(i))
+#     plt.plot(test[str(i)], label='Test '+str(i))
+#     plt.plot(result[str(i)], label='Predicted '+str(i))
+#     plt.legend(loc='best')
+#     st.pyplot(plt)#.show()
