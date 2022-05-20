@@ -43,7 +43,7 @@ st.markdown("""
 
 option = st.selectbox('What data would you like to look at?',('US CPI All items', 'US Crude Oil Prices', 'US Gold Prices'))
 st.header(option + " seasonal decomposition plot")
-select_col1, select_col2 = st.columns(2)
+select_col1, select_col2 = st.columns([6.5,3.5])
 if option == 'US CPI All items':
 	with select_col1:
 		st.image('cpi_streamlit_photos/all_items_seasonal_decomp.jpeg')
@@ -94,6 +94,21 @@ if predict_button:
 st.markdown("""
 	As we plot our model, these are the results that we yield.
 	""")
+
+results_option = st.selectbox("What results would you like to look?", ('All items', 'Crude Oil Price', 'Gold US dollar per oz'))
+results_left, results_right = st.columns([3,7])
+with results_left:
+	st.write('Observing the results that we get from the shown plots, it can be seen that the predictions yield results that are quite \
+		accurate given the data that is receives to be used for modeling. Since our testing data was surrounded around a pandemic, our predictions\
+		 are not as accurate as we would like them to be. ')
+with results_right:
+	plt.rcParams["figure.figsize"] = [10,7]
+	plt.title(results_option + ' Predictions', loc='center')
+	plt.plot(train[results_option], label='Train '+str(results_option))
+	plt.plot(test[results_option], label='Test '+results_option)
+	plt.plot(result[results_option], label='Predicted '+results_option)
+	plt.legend(loc='best')
+	st.pyplot(plt)#.show()
 
 # for i in ['All items', 'Crude Oil Price', 'Gold US dollar per oz']:
 	    
