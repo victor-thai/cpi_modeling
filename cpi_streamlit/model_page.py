@@ -41,23 +41,28 @@ st.markdown("""
 	 data we gathered, they all showed signs of stationarity. 
 	""")
 
-st.write("""
-	### All items seasonal decomposition plot
-	""")
+option = st.selectbox('What data would you like to look at?',('US CPI All items', 'US Crude Oil Prices', 'US Gold Prices'))
+st.header(option + " seasonal decomposition plot")
+select_col1, select_col2 = st.columns(2)
+if option == 'US CPI All items':
+	with select_col1:
+		st.image('cpi_streamlit_photos/all_items_seasonal_decomp.jpeg')
+	with select_col2:
+		st.write('The graph here shows the seasonal decomposition for ' + option +
+			'. When looking at these decomps, we are given useful information on the trend, seasonality, and residual information!')
+elif option == 'US Crude Oil Prices':
+	with select_col1:
+		st.image('cpi_streamlit_photos/crude_oil_seasonal_decomp.jpeg')
+	with select_col2:
+		st.write('The graph here shows the seasonal decomposition for ' + option +
+			'. When looking at these decomps, we are given useful information on the trend, seasonality, and residual information!')
+elif option == 'US Gold Prices':
+	with select_col1:
+		st.image('cpi_streamlit_photos/gold_seasonal_decomp.jpeg')
+	with select_col2:
+		st.write('The graph here shows the seasonal decomposition for ' + option +
+			'. When looking at these decomps, we are given useful information on the trend, seasonality, and residual information!')
 
-st.image('cpi_streamlit_photos/all_items_seasonal_decomp.jpeg')
-
-st.write("""
-	### US Crude Oil prices seasonal decomposition plot
-	""")
-
-st.image('cpi_streamlit_photos/crude_oil_seasonal_decomp.jpeg')
-
-st.write("""
-	### US Gold prices seasonal decomposition plot
-	""")
-
-st.image('cpi_streamlit_photos/gold_seasonal_decomp.jpeg')
 
 st.markdown("""
 	To get rid of stationarity, it is important to
