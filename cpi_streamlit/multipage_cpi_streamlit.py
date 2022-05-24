@@ -3,13 +3,28 @@ import pandas as pd
 import numpy as np
 import time
 import base64
-import statsmodels.api as sm
 import matplotlib.pyplot as plt
-from statsmodels.tsa.statespace.varmax import VARMAX
-from timeit import default_timer as timer
-from sklearn import metrics
 from PIL import Image
 import multipage_template_streamlit as multipage
+
+#varima 
+from statsmodels.tsa.statespace.varmax import VARMAX
+from timeit import default_timer as timer
+import statsmodels.api as sm
+
+#linear regression 
+from sklearn import metrics
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+
+#ridge regression
+from sklearn.linear_model import Ridge
+
+#sarima model
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+import itertools
+
 
 #wide layout
 st.set_page_config(layout='wide')
@@ -211,10 +226,151 @@ def modelpage(prevpage):
 		plt.rcParams["figure.figsize"] = [10,7]
 		plt.title(results_option + ' Predictions', loc='center')
 		plt.plot(train[results_option], label='Train '+str(results_option))
-		plt.plot(test[results_option], label='Test '+results_option)
-		plt.plot(result[results_option], label='Predicted '+results_option)
+		plt.plot(test[results_option], label='Test '+str(results_option))
+		plt.plot(result[results_option], label='Predicted '+str(results_option))
 		plt.legend(loc='best')
 		st.pyplot(plt)#.show()
+
+
+# other models page
+def othermodels(prevpage):
+	st.header("Other noteable models")
+
+	st.markdown("""
+		Although we ended up using the VARIMA model as our final model for our predictions, other models led us to build up to the final model.
+		Initially, we looked into a simple multiple linear regression model for our predictions...
+		""")
+
+	# linear regression model
+	CPI = pd.read_csv('../CPI_Data/Cleaned_CPI_data.csv')
+	CPI.index = pd.to_datetime(CPI.index, infer_datetime_format = True)
+	CPI = CPI.dropna(axis = 1)
+	CPI = CPI[CPI['Unnamed: 0'].str.contains("Percent")==False]
+	CPI = CPI.set_index('Unnamed: 0')
+
+	merged = CPI
+
+	merged = merged.replace('2012-01',0) #could not convert string to float: '2012-01'
+
+	merged = merged.apply(lambda x: pd.to_numeric(x, errors='coerce')).fillna(0)
+
+
+	# remove energy related categories
+	x = merged.drop(['Household energy', 'Fuel oil', 'Fuel oil', 'Propane, kerosene, and firewood', 'Energy services', 'Electricity', 'Utility ',
+	'Fuel oil and other fuels', 'Motor fuel', 'Other motor fuels','Transportation commodities less motor fuel'
+	,'Energy', 'Energy commodities', 'Energy services', 'Fuels and utilities', 'Gasoline '], axis=1)
+
+
+	#separte the predicting attribute into Y for model training 
+	y = merged.get(['Energy'])
+
+	# manually split test and training data
+	x_train = x.iloc[:96]
+	x_test = x.iloc[96:]
+	y_train = y.iloc[:96]
+	y_test = y.iloc[96:]
+
+	#create the linear regression environment
+	LinearRegression_model = LinearRegression()
+
+	#fit the data that we want to use in the model
+	LinearRegression_model.fit(x_train,y_train)
+
+	# predict using the X values to get Y predictions
+	pred_test_lr= LinearRegression_model.predict(x_test)
+
+	
+	st.markdown("""
+		### Linear Regression
+		""")
+
+	# prediction output series to plot
+	predict_date = pd.date_range(y_test.index[0], y_test.index[-1], freq = '1MS')
+	predictions = pd.Series(list(pred_test_lr), index = predict_date)
+
+	# get first elem in list for predictions
+	def first_elem(elem):
+		return elem[0]
+	predictions = predictions.apply(first_elem)
+	predictions.name = 'Energy'
+
+	CPI.index = pd.to_datetime(CPI.index)
+	y_test.index = pd.to_datetime(y_test.index)
+
+
+	# write linear regression results
+	linearregression = st.button('Predict using Linear Regresssion!')
+	if linearregression:
+		st.session_state.load_state = True
+		st.write("RMSE for Linear Regression is " ,np.sqrt(metrics.mean_squared_error(y_test,pred_test_lr))) 
+
+
+
+	# Ridge Regression
+	st.markdown("""
+		### Ridge Regression
+		""")
+
+	# creating ridge regression 
+	rr = Ridge(alpha = 1)
+	# fit with testing data
+	rr.fit(x_train, y_train) 
+	# predict using training data
+	pred_train_rr= rr.predict(x_train)
+
+	# predict using test data
+	pred_test_rr= rr.predict(x_test)
+
+	ridgeregression = st.button('Predict using Ridge Regression!')
+	if ridgeregression:	
+		st.session_state.load_state = True
+		st.write("RMSE for Ridge Regression is ", np.sqrt(metrics.mean_squared_error(y_test,pred_test_rr))) 
+
+
+
+	# SARIMA model
+	st.markdown("""
+		### SARIMA model
+		""")
+
+	CPI = pd.read_csv("../CPI_Data/Merged_Data/Merged_CPI.csv")
+	CPI.set_index('Unnamed: 0', inplace = True)
+	CPI.index = pd.to_datetime(CPI.index, format = '%Y%m')
+	CPI.index = pd.DatetimeIndex(CPI.index.values,
+	                               freq=CPI.index.inferred_freq)
+	X = CPI['All items']
+	X = X.dropna()
+
+	X = X.diff().dropna()
+
+	train_all = X[:-15]
+	test_all = X[-15:]
+
+	model_all = SARIMAX(train_all, order = (0,0,1), seasonal_order = (0,1,1,12))
+	model_all = model_all.fit()
+
+	pred_all = model_all.predict(start=0,end=train_all.shape[0],typ='levels').rename('SARIMAX predictions')
+
+	#Reverse Prediction
+	pred_t_all = model_all.predict(start=train_all.shape[0],end=train_all.shape[0]+test_all.shape[0]-1,typ='levels').rename('SARIMAX predictions')
+	last_month_train = CPI['All items'][-16]
+	# cum sum from last month to initial month
+	pred_t_all[0] = pred_t_all[0] + last_month_train
+	pred_t_all = pd.DataFrame(pred_t_all.cumsum())
+	predicted_index = pd.DataFrame({'index':CPI['All items'].dropna()})
+	SARIMAX_pred_test = np.concatenate([predicted_index[:-15], pred_t_all], axis=0)
+	predicted_index['prediction'] = SARIMAX_pred_test
+	
+	y = predicted_index['index'].iloc[train_all.shape[0]:]
+	y_pred = predicted_index['prediction'].iloc[train_all.shape[0]:]
+
+	#function to calculate rmse
+	def evaluation(y, prediction):
+		return np.sqrt(sum(y ** 2 - prediction ** 2) / y.shape[0])
+
+	sarima = st.button('Predict using SARIMA model!')
+	if sarima:
+		st.write("RMSE for SARIMA: ", evaluation(y,y_pred))
 
 
 # about us page
@@ -269,6 +425,7 @@ app.set_initial_page(intropage)
 app.add_app("Home", homepage)
 app.add_app("EDA/Dataset", edapage)
 app.add_app("VARIMA model", modelpage)
+app.add_app("Other models", othermodels)
 app.add_app("About Us", aboutuspage)
 
 app.run()
