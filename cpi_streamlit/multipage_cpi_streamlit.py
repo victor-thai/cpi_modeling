@@ -373,6 +373,18 @@ def othermodels(prevpage):
 		st.write("RMSE for SARIMA: ", evaluation(y,y_pred))
 
 
+# discussion page about overall project and models
+def discussion(prevpage):
+	st.header("Discusion")
+
+	st.markdown("""
+		This will be the discussion page that talks about our overall project.
+		* problems that we had
+		* relevance to the real world
+		* why we did what we did
+""")
+
+
 # about us page
 def aboutuspage(prev_page):
 	st.title("About Us")
@@ -426,6 +438,7 @@ app.add_app("Home", homepage)
 app.add_app("EDA/Dataset", edapage)
 app.add_app("VARIMA model", modelpage)
 app.add_app("Other models", othermodels)
+app.add_app("Discussion", discussion)
 app.add_app("About Us", aboutuspage)
 
 app.run()
