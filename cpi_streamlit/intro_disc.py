@@ -2,12 +2,21 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-# from prophet import Prophet
+from prophet import Prophet
 from PIL import Image
 from statsmodels.tsa.statespace.varmax import VARMAX
 from timeit import default_timer as timer
 from sklearn import metrics
 from pmdarima import auto_arima
+from sklearn.linear_model import LinearRegression
+from sklearn.impute import SimpleImputer
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+import base64
 import statsmodels.api as sm
 import itertools
 import warnings
@@ -24,7 +33,7 @@ st.sidebar.write("## CPI Modeling")
 others = 0
 
 #Intro Page
-if st.sidebar.button("Intro"):
+if st.sidebar.checkbox("Intro"):
 
         st.title("Intro")
 
@@ -42,35 +51,143 @@ if st.sidebar.button("Intro"):
 
 
 #EDA Page
-st.sidebar.button("Data Cleaning and EDA")
+if st.sidebar.checkbox("Data Cleaning and EDA"):
+        raw_cpi = pd.read_csv('clean_data.csv')
+        raw_cpi = raw_cpi.iloc[2:, :]
+        raw_cpi = raw_cpi.rename(columns={'Unnamed: 0': 'Date'})
+        raw_cpi = raw_cpi.set_index('Date')
+        raw_cpi.index = pd.to_datetime(raw_cpi.index)
+
+
+        st.title('Consumer Price Index EDA')
+        st.markdown("""
+        Consumer Price Index is an important economic index that measures the level of the price of goods and services. It also \
+        measures the level of the inflation rate of a country. Government pay close attention to the inflation rate because it \
+        indicates the level of economic growth. On the other hand, people care about the index as well because it indicates their \
+        buying power. Therefore, being able to predict the future value of the index is important, as it will help people and the \
+        government to make informed decisions. With that being said, let's first explore the data and do some EDA.
+        """)
+
+        st.header('Processed CPI index data')
+        st.write('Data Dimensions: ' + str(raw_cpi.shape[0]) + ' rows and ' + str(raw_cpi.shape[1]) + ' columns')
+        st.dataframe(raw_cpi)
+
+
+        def download_csv(df):
+            csv_file = df.to_csv(index=False)
+            b64 = base64.b64encode(csv_file.encode()).decode()
+            href = f'<a href="data:file/csv;base64,{b64}" download="raw_cpi.csv">Download csv file</a>'
+            return href
+
+
+        st.markdown(download_csv(raw_cpi), unsafe_allow_html=True)
+
+
+        def plot_cpi(df, options):
+            st.header('Plot of CPI index')
+            fig, ax = plt.subplots(figsize=(10, 4))
+            ax.plot(df)
+            ax.set_xlabel('Date', fontsize=12)
+            ax.set_ylabel('index', fontsize=12)
+            ax.legend(options, loc=2, fontsize=12)
+            st.pyplot(fig)
+
+
+        plot_cpi(raw_cpi['All items'], ['All items'])
+
+        if st.checkbox('Plot categories'):
+            option = st.multiselect('Select categories', ['Food', 'Energy', 'Apparel','New vehicles','Medical care commodities','Rent of primary residence','Transportation services'])
+            st.write('You selected:', option)
+            plot_cpi(raw_cpi[option], option)
+
+        st.header('Correlation')
+        st.write('As some index move in slightly different directions, we want to see if there is any correlation between each category')
+        st.image('output.png')
 
 
 #Model Page
-if st.sidebar.button("Model"):
+if st.sidebar.checkbox("Model"):
 
-        st.title("Model")
-
-        #import the data that we need for model
         cpi = pd.read_csv('cpi_w_gold_oil.csv', index_col = 0)
         cpi.index = pd.to_datetime(cpi.index, infer_datetime_format = True)
 
         # there are null column values that we cannot fix
         cpi = cpi.dropna(axis = 1)
 
+        train = cpi.iloc[:96]
+        test = cpi.iloc[96::]
+
         st.markdown('# VARIMA Model')
-        st.markdown('Since CPI data can be interpretted as a type of time series data, we decided to proceed with a VARIMA model\
-                 also known as a Vector Auto Regression Integrated Moving Average Model.')
+        st.markdown("""
+                Since CPI data can be interpretted as a type of time series data, we decided to proceed with a VARIMA model
+                also known as a Vector Auto Regression Integrated Moving Average Model.
+                The VARIMA model is a multivariate forecasting algorithm that is used when two or more time series data influence each
+                other. In our model, we used the features of past CPI data, PPI data, US Crude Oil prices, and US Gold prices. It is
+                modeled as a function of the past values, that is the predictors are nothing but the lags (time delayed value)
+                of the series. Compared to ARIMA models, this model is bi-directional, meaning all parameters can be used to
+                influence oneother.""")
         st.write(cpi)
 
-        decomp = sm.tsa.seasonal_decompose(cpi['All items'], model = 'additive')
-        fig = decomp.plot()
-        plt.xlabel('Year')
-        plt.rcParams["figure.figsize"] = (30,10)
-        plt.show()
+
+
+        st.markdown("""
+                In order for the VARIMA model to work, we must test for stationarity. Within modeling,
+                 stationarity is when the mean, variance, and covariance are constant and not dependent on time. In other
+                 words, our data used for modeling cannot show any clear trends over time. Among all four elements of our
+                 data we gathered, they all showed signs of stationarity.
+                """)
+
+        st.write("""
+                ### All items seasonal decomposition plot
+                """)
+
+        st.image('all_items_seasonal_decomp.jpeg')
+
+        st.write("""
+                ### US Crude Oil prices seasonal decomposition plot
+                """)
+
+        st.image('crude_oil_seasonal_decomp.jpeg')
+
+        st.write("""
+                ### US Gold prices seasonal decomposition plot
+                """)
+        st.image('gold_seasonal_decomp.jpeg')
+
+        st.markdown("""
+                To get rid of stationarity, it is important to
+                 difference the data which would transform our data into new data that doesn’t show any trend, but rather
+                 the difference one value subtracted by another. Through differencing our data to get stationary data, we
+                 plotted an Autocorrelation Function plot. This gives insight into the parameters that we should use for our
+                 VARIMA model.""")
+
+        st.markdown("""
+                Let's predict next month's cpi!
+                """)
+
+        model = VARMAX(train[['All items', 'Crude Oil Price', 'Gold US dollar per oz']], order=(4,0)).fit( disp=False)
+        result = model.forecast(steps = 24)
+
+        #predict_button = st.button('Predict')
+        st.write("Predition:")
+        st.write(result[0:1])
+
+        for i in ['All items', 'Crude Oil Price', 'Gold US dollar per oz']:
+                plt.rcParams["figure.figsize"] = [10,7]
+                plt.plot( train[str(i)], label='Train '+str(i))
+                plt.plot(test[str(i)], label='Test '+str(i))
+                plt.plot(result[str(i)], label='Predicted '+str(i))
+                plt.legend(loc='best')
+                plt.show()
+
+        st.markdown("""
+                As we plot our model, these are the results that we yield.
+                """)
+
 
 
 #Discussion Page
-if st.sidebar.button("Discussion"):
+if st.sidebar.checkbox("Discussion"):
 
         st.title("Discussion")
 
@@ -93,7 +210,7 @@ if st.sidebar.button("Discussion"):
 
 
 #Other Models Page
-if st.sidebar.button("Other Models"):
+if st.sidebar.checkbox("Other Models"):
         st.title("Other Models")
 
         st.subheader("Prophet")
@@ -129,61 +246,28 @@ if st.sidebar.button("Other Models"):
 
         st.subheader("")
 
-
         st.subheader("SARIMA")
 
-        '''
-        CPI = pd.read_csv("Merged_CPI.csv")
-        CPI.set_index('Unnamed: 0', inplace = True)
-        CPI.index = pd.to_datetime(CPI.index, format = '%Y%m')
-        CPI.index = pd.DatetimeIndex(CPI.index.values,
-                                       freq=CPI.index.inferred_freq)
-        X = CPI[cat]
-        X = X.dropna()
-        X = X.diff().dropna()
-        train_all = X[:-15]
-        test_all = X[-15:]
-
-        p = d = q = range(0, 2)
-        pdq = list(itertools.product(p, d, q))
-        pdq_s = [(x[0], x[1], x[2], 12) for x in list(itertools.product(p, d, q))]
-        param_model = []
-        param_s_model = []
-        AIC_model = []
-        model_select = pd.DataFrame()
-        for param in pdq:
-            for param_s in pdq_s:
-                model = sm.tsa.statespace.SARIMAX(train_all,order=param,seasonal_order=param_s,enforce_stationarity=False,enforce_invertibility=False)
-                model = model.fit()
-                print('ARIMA{}x{} - AIC:{}'.format(param, param_s, model.aic))
-                param_model.append(param)
-                param_s_model.append(param_s)
-                AIC_model.append(model.aic)
-        model_select['pdq'] = param_model
-        model_select['pdq_x_PDQs'] = param_s_model
-        model_select['aic'] = AIC_model
-
-        pred_all = model_all.predict(start=0,end=train_all.shape[0],typ='levels').rename('SARIMAX predictions')
-        fig_a, ax_a = plt.subplots(1,1, figsize=(15,15))
-        X.plot(legend = True, ax = ax_a)
-        pred_all.plot(legend=True, ax=ax_a)
-
-        pred_f_a = model_all.predict(start=train_all.shape[0]-1,end=train_all.shape[0]+10,typ='levels').rename('SARIMAX predictions')
-        st.write(pred_f_a.plot())
-        '''
-
-        st.write("The reason we decided to not use this model is beacuse it is very similar \
+        st.write("The reason we decided to not use SARIMA is beacuse it is very similar \
                 to the model we ended up going with. We chose VARIMA because seasonality \
                 (the 'S' in 'SARIMA') was already taken care of through differencing. We also \
-                prefered the fact that VARIMA works by using multiple varibles, thus giving us a \
+                preferred the fact that VARIMA works by using multiple varibles, thus giving us a \
                 more accurate forecast.")
 
+
+        st.subheader("Lasso Regression")
+
+        st.write('Unlike the previous models, the Lasso Regression cannot forecast values, \
+                it can only predict a variable based on other index values. For this reason, \
+                we decided against it as our final model because our goal was to forecast the \
+                future values of CPI. However, it still provided useful information on how \
+                indexes are related to one another. ')
 
 
 
 
 #About Us Page
-if st.sidebar.button("About Us"):
+if st.sidebar.checkbox("About Us"):
 
         banner = Image.open("ds3_banner.PNG")
         st.image(banner, width = 700)
@@ -204,6 +288,10 @@ if st.sidebar.button("About Us"):
             st.write("Victor is a second-year at UC San Diego, majoring in Data Science \
                 and minor in Cognitive Science. He is a member of CASA at UCSD and enjoys \
                 weightlifting to relieve stress.")
+        with v_col2:
+                st.subheader("")
+                v_img = Image.open("victor_headshot.JPEG")
+                st.image(v_img, width = 200)
 
         m_col1, m_col2 = st.columns(2)
         with m_col1:
@@ -211,6 +299,10 @@ if st.sidebar.button("About Us"):
             st.write("Michael is a second-year student at UC San Diego, majoring in Data Science \
                 and Minor in Management Science. Michael is also involved in the Finance Committee \
                 in UTS at UCSD.")
+        with m_col2:
+                st.subheader("")
+                m_img = Image.open("michael_headshot.JPEG")
+                st.image(m_img, width = 200)
 
         s_col1, s_col2 = st.columns(2)
         with s_col1:
