@@ -46,12 +46,15 @@ def intropage():
 
 	st.markdown("# What will our economy look like in the next month?")
 
-	intro_left_col, intro_right_col = st.columns(2)
+	intro_left_col, intro_mid_col, intro_right_col = st.columns([8,5,3])
 
-	with intro_right_col:
-		st.write("This project focues on analyzing the trends of Consumer \
-				Price Index, also known as CPI, and applies a predictive VAR model \
-				 to predict the next month's CPI.")
+	with intro_mid_col:
+		st.markdown("""
+			#
+	This project focuses on analyzing the trends among consumer price index (CPI) data, collected from 2012-2021 by the
+	US Bureau of Labor Statistics and uses such data to forecast future price indexes using machine learning models.
+	Our final model uses a predictive VAR model that generated the most accurate and reliable results among our analyzes.
+	""")
 
 	with intro_left_col:
 		st.image('cpi_streamlit_photos/cpi_intro_photo.jpeg')
@@ -62,12 +65,14 @@ def homepage(prevpage):
 
 	st.markdown("# What will our economy look like in the next month?")
 
-	intro_left_col, intro_right_col = st.columns(2)
+	intro_left_col, intro_mid_col, intro_right_col = st.columns([8,5,3])
 
-	with intro_right_col:
-		st.write("This project focues on analyzing the trends of Consumer \
-				Price Index, also known as CPI, and applies a predictive VAR model \
-				 to predict the next month's CPI.")
+	with intro_mid_col:
+		st.markdown("""
+	This project focuses on analyzing the trends among consumer price index (CPI) data, collected from 2012-2021 by the
+	US Bureau of Labor Statistics and uses such data to forecast future price indexes using machine learning models.
+	Our final model uses a predictive VAR model that generated the most accurate and reliable results among our analyzes.
+	""")
 
 	with intro_left_col:
 		st.image('cpi_streamlit_photos/cpi_intro_photo.jpeg')
@@ -86,14 +91,29 @@ def edapage(prevpage):
 
 	st.title('Consumer Price Index EDA')
 	st.markdown("""
-	Consumer Price Index is an important economic index that measures the level of the price of goods and services. It also \
-	measures the level of the inflation rate of a country. Government pay close attention to the inflation rate because it \
-	indicates the level of economic growth. On the other hand, people care about the index as well because it indicates their \
-	buying power. Therefore, being able to predict the future value of the index is important, as it will help people and the \
-	government to make informed decisions. With that being said, let's first explore the data and do some EDA.
-	""")
+		Consumer Price Index is an important measure for the average change of a basket of goods or services over a time period.
+		Most often, it is used as a gauge for the trends of inflation in a country's economy. It's important that governments
+		pay close attention to this price index as it can be a factor to either indicate growth or decay among the economy.
+		Being able to predict the consumer price index is important, as it will help a country's citizens and its government
+		make informed decisions on their steps.
+		""")
+	st. markdown("""
+		Let's explore the data that we are working with now!
+		""")
+	st.markdown("""
+		#
+		Our data was taken from the US Burearu of Labor Statistics in the form of 100+ excel files for each month among the years 2012-2021.
+		each file contained around 315 columns of expenditure categories.
+		These excel files could not simply be read a simple call to read these files. As a result, we had to filter through messy whitespaces,
+		redundant data values, and labels that were not in consistent format.
+		""")
 
-	st.header('Processed CPI index data')
+	st.markdown("""
+		While gathering our cpi data, we also realized that CPI data is influenced by factors other than its' categories itself.
+		This led us to collect data on US gold prices and US crude oil prices which are often gauges for how CPI will react.
+		""")
+
+	st.header('Processed CPI Dataset')
 	st.write('Our Data Dimensions consist of ' + str(raw_cpi.shape[0]) + ' rows and ' + str(raw_cpi.shape[1]) + ' columns.')
 	st.dataframe(raw_cpi)
 
@@ -375,7 +395,24 @@ def othermodels(prevpage):
 
 # discussion page about overall project and models
 def discussion(prevpage):
-	st.header("Discusion")
+	st.header("Discussion")
+
+	st.subheader("Why would a predictive model useful?")
+	st.write("Our model allows us to predict CPI changes and gives \
+            the average consumer a good idea of what the economy may look like \
+            in the future. It could also give economists a picture of what to \
+            look out for, and thus take any precautionary measures necessary.")
+
+	st.subheader("Why VARIMA?")
+	st.write("We ultimately chose to use VARIMA to make our model. This model \
+            turned out to be accurate, efficient, and easy to explain.")
+
+	st.subheader("Limitations")
+	st.write("Our model is not robust to extreme worldly events. Sudden recessions \
+            and booms have an impact the accuracy of our model. For example, \
+            the pandemic lockdowns caused erratic changes in CPI and high levels \
+            of inflation. External factors such as the Russia-Ukraine conflict also \
+            introduce even more entropy to our forecasting.")
 
 	st.markdown("""
 		This will be the discussion page that talks about our overall project.
