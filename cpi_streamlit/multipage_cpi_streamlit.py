@@ -82,7 +82,7 @@ def homepage(prevpage):
 def edapage(prevpage):
 	plt.style.use('dark_background')
 
-	raw_cpi = pd.read_csv('../CPI_Data/Clean_data.csv')
+	raw_cpi = pd.read_csv('../CPI_Data/cpi_w_gold_oil.csv')
 	raw_cpi = raw_cpi.iloc[2:, :]
 	raw_cpi = raw_cpi.rename(columns={'Unnamed: 0': 'Date'})
 	raw_cpi = raw_cpi.set_index('Date')
@@ -127,9 +127,13 @@ def edapage(prevpage):
 
 	st.markdown(download_csv(raw_cpi), unsafe_allow_html=True)
 
+	st.header('Plot of CPI index')
+	st.markdown("""
+		With such a wide variety of specific expenditure categories, we were able to collapse similar category items into a total
+		of 7 major expenditure categories that is often used to gauge overall CPI.
+		""")
 
 	def plot_cpi(df, options):
-	    st.header('Plot of CPI index')
 	    fig, ax = plt.subplots(figsize=(10, 4))
 	    ax.plot(df)
 	    ax.set_xlabel('Date', fontsize=12)
@@ -141,9 +145,29 @@ def edapage(prevpage):
 	plot_cpi(raw_cpi['All items'], ['All items'])
 
 	if st.checkbox('Plot categories'):
-	    option = st.multiselect('Select categories', ['Food', 'Energy', 'Apparel','New vehicles','Medical care commodities','Rent of primary residence','Transportation services'])
-	    st.write('You selected:', option)
-	    plot_cpi(raw_cpi[option], option)
+	    option = st.multiselect('Select categories', ['Food and beverages','Housing','Apparel','Transportation',
+                     'Medical care','Recreation','Education and communication','Other goods and services'])
+	    if st.checkbox('Plot All Categories!'):
+	    	option = ['Food and beverages','Housing','Apparel','Transportation',
+                     'Medical care','Recreation','Education and communication','Other goods and services']
+	    	st.write('You selected:', option)
+	    	plot_cpi(raw_cpi[option], option)
+	    else:
+		    st.write('You selected:', option)
+		    plot_cpi(raw_cpi[option], option)
+
+
+	st.markdown("""
+		As we plot the trends among major expenditure categories, it can be noticed that there are prominent dips and increases.
+		When we looked more into the causes of such events, we were able to observe that any trends that were abrupt ended up being
+		linked with the current events happening in the world around us. 
+		""")
+	st. markdown("""
+		For example, within the past few years COVID-19 has been a significant event that has caused changes
+		that has never been seen in our lives before. This caused dramatic changes to the transportation trends leaving a significant dip in our graph above.
+
+		Other categories such as Apparel has a consistent seasonal trend that is depicted with the wavy trend.
+		""")
 
 	st.header('Correlation')
 	st.write('As some index move in slightly different directions, we want to see if there is any correlation between each category')
@@ -249,12 +273,12 @@ def modelpage(prevpage):
 		plt.plot(test[results_option], label='Test '+str(results_option))
 		plt.plot(result[results_option], label='Predicted '+str(results_option))
 		plt.legend(loc='best')
-		st.pyplot(plt)#.show()
+		st.pyplot(plt)
 
 
 # other models page
 def othermodels(prevpage):
-	st.header("Other noteable models")
+	st.title("Other Noteable Models")
 
 	st.markdown("""
 		Although we ended up using the VARIMA model as our final model for our predictions, other models led us to build up to the final model.
@@ -304,6 +328,14 @@ def othermodels(prevpage):
 		### Linear Regression
 		""")
 
+	st.markdown("""
+		Linear Regression looks at the relationship between a dependent variable Y and one or more independent variable X's.
+		These independent variables are used to analyze how these predictor variables can predict
+		an outcome variable.
+
+		For this model, we used the major expenditure categories to predict the All items CPI values.
+		""")
+
 	# prediction output series to plot
 	predict_date = pd.date_range(y_test.index[0], y_test.index[-1], freq = '1MS')
 	predictions = pd.Series(list(pred_test_lr), index = predict_date)
@@ -324,11 +356,32 @@ def othermodels(prevpage):
 		st.session_state.load_state = True
 		st.write("RMSE for Linear Regression is " ,np.sqrt(metrics.mean_squared_error(y_test,pred_test_lr))) 
 
-
+		linreg_leftcol, linreg_rightcol = st.columns([1,8])
+		with linreg_rightcol:
+			st.markdown("""
+				This model gave us an overly accurate score as we were only using CPI data that all has some correlation with the final outcome variable.
+				Often times, overfitting and accurate scores can come from input variables that give the answer to the model away.
+				""")
 
 	# Ridge Regression
 	st.markdown("""
-		### Ridge Regression
+		### Ridge / Lasso Regression
+		""")
+
+	st.markdown("""
+		Since our data has such high collinearity, this model can select the one best feature to be used for the whole model.
+		Ridge/Lasso Regression has the advantage of being able to prioritizing the mean of data points.
+		Ridge Regression uses L2 regularization for its model whereas Lasso uses L1 regularization.
+
+		L2 regularization = penalizes the sum of squares of the weights
+		-choosing ideal alpha value is important since small will overfit model and large will underfit the model
+		-not ideal for feature reduction, only minimizes feature weights, but doesn't get rid of it
+
+		L1 regularization = penalizes the sum of absolute values of the weights
+		-helps with high collinearity by selecting features that does not give answer away
+
+		The difference between the two is the weight of the penalties that model places.
+
 		""")
 
 	# creating ridge regression 
@@ -351,6 +404,13 @@ def othermodels(prevpage):
 	# SARIMA model
 	st.markdown("""
 		### SARIMA model
+		""")
+
+	st.markdown("""
+		A SARIMA, seasonal autoregressive integrated moving average, model is similar to the VARIMA model that we implemented.
+		This model differs in the fact that it takes in only a limited number of variables to be used for forecasting.
+		Often times, CPI trends are influenced and hinted from other features besides CPI data itself.
+		On top of that, this model takes into account any seasonality trends that may be present in our data which is handled among the VARIMA model we implemented.
 		""")
 
 	CPI = pd.read_csv("../CPI_Data/Merged_Data/Merged_CPI.csv")
@@ -395,31 +455,49 @@ def othermodels(prevpage):
 
 # discussion page about overall project and models
 def discussion(prevpage):
-	st.header("Discussion")
+	st.title("Discussion")
 
-	st.subheader("Why would a predictive model useful?")
-	st.write("Our model allows us to predict CPI changes and gives \
-            the average consumer a good idea of what the economy may look like \
-            in the future. It could also give economists a picture of what to \
-            look out for, and thus take any precautionary measures necessary.")
+	st.subheader("So why is CPI and a predictive model useful?")
+	st.markdown("""
+		CPI is a key indicator of how the economy is doing. Understanding the causes of CPI 
+		and inflation provide valuable information to consumers, and our government deciding 
+		fiscal and monetary policy. It also influences wages, retirement benefits, and tax brackets. 
+		Our model allows us to predict these changes and gain a greater understanding of what causes 
+		these changes. With so many Americans feeling the effects of inflation, predicting how 
+		long spikes will be and how severe they will be is crucial to understanding the United States’ 
+		economic outlook.
+		""")
+
+	st.image('cpi_streamlit_photos/model_results.jpg')
 
 	st.subheader("Why VARIMA?")
-	st.write("We ultimately chose to use VARIMA to make our model. This model \
-            turned out to be accurate, efficient, and easy to explain.")
+
+	st.markdown("""
+		We ultimately chose to use VARIMA to make our model. This model
+        turned out to be accurate, efficient, and easy to explain.""")
+
+	st.markdown("""
+		Among our models, the Linear Regression and Lasso/Ridge Regression both gave us high accraucy
+        scores. These high accuracy scores lead us to believe that the models are overfitting on the data
+        that it is given. This can be due to the fact that some variables directly give the answer away to
+        the model which is not a situation we want in our models.
+		""")
+
+	st.markdown("""
+		To handle this high collinearity, the VARIMA model uses autocorrelation that splits our data into smaller
+        chunks to get a trend for a small time period along with the overall trend.
+		""")
+
 
 	st.subheader("Limitations")
 	st.write("Our model is not robust to extreme worldly events. Sudden recessions \
             and booms have an impact the accuracy of our model. For example, \
-            the pandemic lockdowns caused erratic changes in CPI and high levels \
-            of inflation. External factors such as the Russia-Ukraine conflict also \
-            introduce even more entropy to our forecasting.")
+            the COVID-19 pandemic lockdowns caused erratic changes in CPI and high levels \
+            of inflation. External factors such as the Russia-Ukraine conflict around 2014 was also \
+            a series of events that introduced even more entropy to our forecasting. \
+            Our models can only handle cases that can be predicted rather than sudden events that \
+            fall out of line of typical trends. ")
 
-	st.markdown("""
-		This will be the discussion page that talks about our overall project.
-		* problems that we had
-		* relevance to the real world
-		* why we did what we did
-""")
 
 
 # about us page
