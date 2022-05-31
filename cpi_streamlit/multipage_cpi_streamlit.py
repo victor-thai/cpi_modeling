@@ -82,7 +82,7 @@ def homepage(prevpage):
 def edapage(prevpage):
 	plt.style.use('dark_background')
 
-	raw_cpi = pd.read_csv('../CPI_Data/cpi_w_gold_oil.csv')
+	raw_cpi = pd.read_csv('../CPI_Data/cpi_w_gold_oil_apr22.csv')
 	raw_cpi = raw_cpi.iloc[2:, :]
 	raw_cpi = raw_cpi.rename(columns={'Unnamed: 0': 'Date'})
 	raw_cpi = raw_cpi.set_index('Date')
@@ -176,7 +176,7 @@ def edapage(prevpage):
 
 # varima model page
 def modelpage(prevpage):
-	cpi = pd.read_csv('../CPI_Data/cpi_w_gold_oil.csv', index_col = 0)
+	cpi = pd.read_csv('../CPI_Data/cpi_w_gold_oil_apr22.csv', index_col = 0)
 	cpi.index = pd.to_datetime(cpi.index, infer_datetime_format = True)
 
 	# there are null column values that we cannot fix
@@ -245,7 +245,7 @@ def modelpage(prevpage):
 
 	predict_button = st.button('Predict')
 	if predict_button:
-		st.write(result[0:1])
+		st.write(result.iloc[6])
 
 		for i in ['All items', 'Crude Oil Price', 'Gold US dollar per oz']:
 		    
@@ -507,14 +507,18 @@ def aboutuspage(prev_page):
 	banner = Image.open("cpi_streamlit_photos/ds3_banner.PNG")
 	st.image(banner, width = 700)
 
-	st.write("We are a group of students from UCSD's Data Science Student Society. As members of the CPI project team, we show passion, initiative, and competence to contribute to this 2-quarter long project. Our team has a diverse background but we are brought together by a common love for data science.")
+	st.markdown("""We are a group of students from UCSD's Data Science Student Society. As members of the 
+		CPI project team, we show passion, initiative, and competence to contribute to this 2-quarter long project. 
+		Our team has a diverse background but we are brought together by a common love for data science.""")
 
 	st.title("Project Members")
 
 	v_col1, v_col2 = st.columns(2)
 	with v_col1:
 	    st.subheader("Project Lead: Victor Thai")
-	    st.write("Victor is a second-year at UC San Diego, majoring in Data Science and minor in Cognitive Science. He is a member of CASA at UCSD and enjoys weightlifting to relieve stress.")
+	    st.markdown("""Victor is a second-year at UC San Diego, majoring in Data Science and minor in Cognitive Science. 
+	    	He is a member of CASA at UCSD and enjoys weightlifting to relieve stress. Victor plans to apply his data science skills
+	    	into data analysis skills in cognitive science or the medical field.""")
 	with v_col2:
 	    st.subheader("")
 	    v_img = Image.open("cpi_streamlit_photos/victor_headshot.jpeg")
@@ -523,7 +527,8 @@ def aboutuspage(prev_page):
 	m_col1, m_col2 = st.columns(2)
 	with m_col1:
 	    st.subheader("Michael Chen")    
-	    st.write("Michael is a second-year student at UC San Diego, majoring in Data Science and Minor in Management Science. Michael was in the Chinese Union. A fun fact about him is that he gets excited when facing a hard task to be solved.")
+	    st.markdown("""Michael is a second-year student at UC San Diego, majoring in Data Science and Minor in Management Science. 
+	    	Michael was in the Chinese Union. A fun fact about him is that he gets excited when facing a hard task to be solved.""")
 	with m_col2:
 	    st.subheader("")
 	    m_img = Image.open("cpi_streamlit_photos/michael_headshot.jpeg")
@@ -532,7 +537,9 @@ def aboutuspage(prev_page):
 	s_col1, s_col2 = st.columns(2)
 	with s_col1:
 	    st.subheader("Stephanie Chavez")
-	    st.write("Stephanie is a second-year student at UC San Diego, majoring in Data Science. Stephanie is a sister of Sigma Pi Alpha Sorority, Inc. and is a First-Gen Student Success Peer Coach. Some of her interests outside of data science include musical theatre, fantasy books, and dogs.")
+	    st.markdown("""Stephanie is a second-year student at UC San Diego, majoring in Data Science. Stephanie is a sister of Sigma Pi 
+	    	Alpha Sorority, Inc. and is a First-Gen Student Success Peer Coach. Some of her interests outside of data science include 
+	    	musical theatre, fantasy books, and dogs.""")
 	with s_col2:
 		st.subheader("")
 		steph_img = Image.open("cpi_streamlit_photos/steph_headshot.jpg")
@@ -541,7 +548,8 @@ def aboutuspage(prev_page):
 	z_col1, z_col2 = st.columns(2)
 	with z_col1:
 	    st.subheader("Zed Siyed")
-	    st.write("Zed is a first-year student at UC San Diego, majoring in Computer Science. Zed is also a member of Triton Consulting Group as the VP Tech Consulting. Some of Zed's hobbies are sports analytics and weightlifting.")
+	    st.markdown("""Zed is a first-year student at UC San Diego, majoring in Computer Science. Zed is also a member of Triton Consulting 
+	    	Group as the VP Tech Consulting. Some of Zed's hobbies are sports analytics and weightlifting.""")
 	with z_col2:
 	    st.subheader("")
 	    zed_img = Image.open("cpi_streamlit_photos/zed_headshot.PNG")
