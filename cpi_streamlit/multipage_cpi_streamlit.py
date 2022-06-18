@@ -241,11 +241,12 @@ def modelpage(prevpage):
 		""")
 
 	model = VARMAX(train[['All items', 'Crude Oil Price', 'Gold US dollar per oz']], order=(4,0)).fit( disp=False)
-	result = model.forecast(steps = 24)
+	result = model.forecast(steps = 36)
 
 	predict_button = st.button('Predict')
 	if predict_button:
-		st.write(result.iloc[6])
+		# starts from jan 2020 data in prediction
+		st.write(result.iloc[29])
 
 		for i in ['All items', 'Crude Oil Price', 'Gold US dollar per oz']:
 		    
